@@ -1,0 +1,127 @@
+{
+  "name": "voice-buddy",
+  "displayName": "Claude Code Voice Buddy",
+  "publisher": "lemonpopdo",
+  "version": "1.0.0",
+  "description": "CC - personality-driven voice companion for Claude Code",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lemonpopdo/Claude-Code-Voice-Buddy-VSCode"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "voice",
+    "tts",
+    "personality",
+    "claude-code"
+  ],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "type": "module",
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "*"
+  ],
+  "contributes": {
+    "configuration": {
+      "title": "Claude Code Voice Buddy",
+      "properties": {
+        "voiceBuddy.style": {
+          "type": "string",
+          "enum": [
+            "cute-girl",
+            "elegant-lady",
+            "warm-boy",
+            "secretary",
+            "kawaii"
+          ],
+          "default": "cute-girl",
+          "description": "Voice personality style"
+        },
+        "voiceBuddy.nickname": {
+          "type": "string",
+          "default": "Master",
+          "description": "How CC addresses you"
+        },
+        "voiceBuddy.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable all voice notifications"
+        },
+        "voiceBuddy.events.sessionstart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play voice on session start"
+        },
+        "voiceBuddy.events.sessionend": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play voice on session end"
+        },
+        "voiceBuddy.events.notification": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play voice on notifications"
+        },
+        "voiceBuddy.events.stop": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play voice when Claude completes a task"
+        },
+        "voiceBuddy.events.posttooluse": {
+          "type": "boolean",
+          "default": false,
+          "description": "Play voice on tool use events"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "voiceBuddy.handleHook",
+        "title": "Voice Buddy Hook Handler"
+      },
+      {
+        "command": "voiceBuddy.configureHooks",
+        "title": "Configure Claude Code Hooks"
+      },
+      {
+        "command": "voiceBuddy.test",
+        "title": "Test Voice Buddy"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "voiceBuddySidebar",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "voiceBuddySidebar": [
+        {
+          "id": "voiceBuddy.view",
+          "name": "Voice Buddy",
+          "type": "webview"
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "node-edge-tts": "^1.2.10"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.39",
+    "@types/vscode": "^1.110.0",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  }
+}
