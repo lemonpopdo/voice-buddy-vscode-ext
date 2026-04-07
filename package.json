@@ -116,8 +116,9 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.39",
-    "@types/vscode": "^1.110.0",
-    "typescript": "^5.9.3"
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.9.3",
+    "vsce": "^2.15.0"
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

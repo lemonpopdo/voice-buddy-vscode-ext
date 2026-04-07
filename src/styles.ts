@@ -18,6 +18,7 @@ export interface StyleTemplates {
   sessionend: string[];
   notification: string[];
   posttooluse: Record<string, string[]>;
+  stop: string[];  // 任务完成播报前缀
 }
 
 export const STYLES: Record<string, Style> = {
@@ -53,6 +54,12 @@ export const STYLES: Record<string, Style> = {
         git_push: ['代码飞出去啦~', '推送成功！'],
         default: ['搞定啦~', '完成了呢~'],
       },
+      stop: [
+        '好的 {{nickname}}，帮你搞定啦',
+        '{{nickname}}，已经完成啦~',
+        '帮你做好啦，{{nickname}}~',
+        '{{nickname}}，全部搞定咯！',
+      ],
     },
   },
   'elegant-lady': {
@@ -85,6 +92,12 @@ export const STYLES: Record<string, Style> = {
         git_push: ['推送成功！'],
         default: ['搞定啦~'],
       },
+      stop: [
+        '好的 {{nickname}}，已经完成了',
+        '{{nickname}}，任务搞定',
+        '已为您完成，{{nickname}}~',
+        '{{nickname}}，全部就绪',
+      ],
     },
   },
   'warm-boy': {
@@ -117,6 +130,12 @@ export const STYLES: Record<string, Style> = {
         git_push: ['推送成功！'],
         default: ['搞定啦~'],
       },
+      stop: [
+        '{{nickname}}，已经帮你完成了',
+        '搞定了，{{nickname}}，辛苦了',
+        '{{nickname}}，任务全部搞定',
+        '好了，{{nickname}}，休息一下吧',
+      ],
     },
   },
   secretary: {
@@ -149,6 +168,12 @@ export const STYLES: Record<string, Style> = {
         git_push: ['Push complete'],
         default: ['Done.', 'Completed.'],
       },
+      stop: [
+        '{{nickname}}, task completed',
+        '{{nickname}}, all done here',
+        'Completed, {{nickname}}',
+        'Done, {{nickname}}, you\'re all set',
+      ],
     },
   },
   kawaii: {
@@ -181,6 +206,12 @@ export const STYLES: Record<string, Style> = {
         git_push: ['プッシュしたよ~'],
         default: ['できた~', '搞定~'],
       },
+      stop: [
+        '{{nickname}}、できたよ~',
+        '{{nickname}}、 завершено 啦~',
+        '{{nickname}}、やり遂げたね~',
+        '搞定~ {{nickname}}、お疲れ様~',
+      ],
     },
   },
 };
