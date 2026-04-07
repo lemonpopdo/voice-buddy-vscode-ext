@@ -13,6 +13,7 @@ import type { HookEventData } from './hook-handler.js';
 import { getStyle, getNickname, setStyle, setNickname, setEnabled } from './config.js';
 import { listStyles } from './styles.js';
 import { synthesizeAndPlay, pickTemplate } from './audio-manager.js';
+import { setWebviewView, playAudioInWebview, stopServer } from './audio-server.js';
 
 let webviewView: VoiceBuddyView | undefined;
 
@@ -54,6 +55,13 @@ export function activate(context: vscode.ExtensionContext) {
       webviewOptions: { retainContextWhenHidden: true },
     })
   );
+
+  // Cleanup on deactivate
+  context.subscriptions.push({
+    dispose: () => {
+      stopServer();
+    },
+  });
 
   // First-run notification
   const firstRun = context.globalState.get<boolean>('voiceBuddy.firstRun', true);
@@ -213,6 +221,7 @@ class VoiceBuddyView implements vscode.WebviewViewProvider {
       enableScripts: true,
     };
     webviewView.webview.html = this._getHtml();
+    setWebviewView(webviewView);
 
     webviewView.webview.onDidReceiveMessage(async (msg) => {
       if (msg.type === 'setStyle') {
@@ -267,6 +276,7 @@ class VoiceBuddyView implements vscode.WebviewViewProvider {
 <html>
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css">
 <style>
   body { margin: 0; padding: 12px; font-family: system-ui, sans-serif; background: transparent; color: #ccc; }
   .header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
@@ -295,6 +305,10 @@ class VoiceBuddyView implements vscode.WebviewViewProvider {
   .toggle-label { font-size: 12px; }
   .disabled-overlay { opacity: 0.5; pointer-events: none; }
   .status { font-size: 11px; color: #888; margin-top: 8px; padding: 6px; background: #1a1a1a; border-radius: 4px; }
+  /* Hidden audio player */
+  #audio-player { display: none; }
+  /* Now playing indicator */
+  .now-playing { font-size: 11px; color: #4fc3f7; margin-top: 6px; min-height: 16px; }
 </style>
 </head>
 <body>
@@ -325,10 +339,28 @@ class VoiceBuddyView implements vscode.WebviewViewProvider {
     <div class="status" id="status">
       Style: ${currentStyle} · Nickname: ${nickname}
     </div>
+    <div class="now-playing" id="now-playing"></div>
   </div>
 
+  <!-- Hidden audio element for voice playback -->
+  <audio id="audio-player" preload="none"></audio>
+
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js"></script>
   <script>
     const vscode = acquireVsCodeApi();
+    const playerEl = document.getElementById('audio-player');
+    const nowPlayingEl = document.getElementById('now-playing');
+
+    // Initialize Plyr on the audio element
+    let player = null;
+    if (typeof Plyr !== 'undefined') {
+      player = new Plyr(playerEl, {
+        controls: ['play', 'progress', 'current-time', 'duration', 'volume', 'mute'],
+        autoplay: false,
+        volume: 0.8,
+        speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+      });
+    }
 
     document.querySelectorAll('.style-card').forEach(card => {
       card.addEventListener('click', () => {
@@ -350,11 +382,27 @@ class VoiceBuddyView implements vscode.WebviewViewProvider {
       vscode.postMessage({ type: 'configureHooks' });
     });
 
-    // Update status on message receipt
+    // Handle messages from extension
     window.addEventListener('message', (event) => {
       const msg = event.data;
       if (msg.type === 'refresh') {
         document.getElementById('status').textContent = msg.status;
+      } else if (msg.type === 'playAudio') {
+        // Play audio via HTTP URL
+        if (player) {
+          player.src = [{ src: msg.audioUrl + '?t=' + Date.now(), type: 'audio/mpeg' }];
+          player.play().catch(() => {});
+          nowPlayingEl.textContent = msg.text ? '🔊 ' + msg.text : '🔊 Playing...';
+          player.once('ended', () => {
+            nowPlayingEl.textContent = '';
+          });
+        } else {
+          // Fallback without Plyr
+          playerEl.src = msg.audioUrl + '?t=' + Date.now();
+          playerEl.play().catch(() => {});
+          nowPlayingEl.textContent = msg.text ? '🔊 ' + msg.text : '🔊 Playing...';
+          playerEl.onended = () => { nowPlayingEl.textContent = ''; };
+        }
       }
     });
   </script>

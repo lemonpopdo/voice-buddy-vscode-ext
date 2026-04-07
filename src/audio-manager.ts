@@ -1,6 +1,7 @@
 /**
  * Audio Manager for Voice Buddy.
- * Handles both pre-baked audio playback (via Plyr) and real-time TTS synthesis.
+ * Handles both pre-baked audio playback and real-time TTS synthesis.
+ * Playback: tries Plyr first (desktop), falls back to webview HTTP (code-server).
  */
 
 import * as vscode from 'vscode';
@@ -9,6 +10,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { EdgeTTS } from 'node-edge-tts';
 import { getStyle, STYLES } from './styles.js';
+import { playAudioInWebview } from './audio-server.js';
 
 let extUri: vscode.Uri | undefined;
 
@@ -22,7 +24,29 @@ function getExtPath(): string {
 }
 
 /**
- * Play a pre-baked audio file via Plyr's player.openFile command.
+ * Try Plyr first (desktop), then fall back to webview HTTP.
+ */
+async function _playFile(filePath: string, text: string): Promise<void> {
+  try {
+    const uri = vscode.Uri.file(filePath);
+    await vscode.commands.executeCommand('player.openFile', uri);
+    return;  // Plyr succeeded
+  } catch {
+    // Plyr not available — use webview HTTP playback
+  }
+
+  try {
+    playAudioInWebview(filePath, text);
+  } catch (err) {
+    console.warn('[VoiceBuddy] Webview playback failed:', err);
+    vscode.window.showWarningMessage(
+      'Voice Buddy: No audio player available. Install Plyr extension or ensure webview is open.'
+    );
+  }
+}
+
+/**
+ * Play a pre-baked audio file.
  */
 export async function playPrebaked(style: string, audioId: string): Promise<void> {
   const extPath = getExtPath();
@@ -34,20 +58,11 @@ export async function playPrebaked(style: string, audioId: string): Promise<void
     return;
   }
 
-  try {
-    const uri = vscode.Uri.file(filePath);
-    await vscode.commands.executeCommand('player.openFile', uri);
-  } catch (err) {
-    // Plyr may not be installed
-    console.warn('[VoiceBuddy] Plyr not found or player.openFile failed:', err);
-    vscode.window.showWarningMessage(
-      'Voice Buddy: Plyr extension is required for audio playback. Install it from Open VSX Registry.'
-    );
-  }
+  await _playFile(filePath, '');
 }
 
 /**
- * Synthesize text with edge-tts and play via Plyr.
+ * Synthesize text with edge-tts and play.
  */
 export async function synthesizeAndPlay(
   text: string,
@@ -65,17 +80,14 @@ export async function synthesizeAndPlay(
       pitch: style.pitch,
     });
     await tts.ttsPromise(text, tmpFile);
+    await _playFile(tmpFile, text);
 
-    const uri = vscode.Uri.file(tmpFile);
-    await vscode.commands.executeCommand('player.openFile', uri);
-
-    // Cleanup after playback starts (give it 10s to load into Plyr)
+    // Cleanup after playback starts
     setTimeout(() => {
       try { fs.unlinkSync(tmpFile); } catch { /* ignore */ }
-    }, 10_000);
+    }, 15_000);
   } catch (err) {
     console.error('[VoiceBuddy] TTS synthesis failed:', err);
-    // Cleanup on error
     try { fs.unlinkSync(tmpFile); } catch { /* ignore */ }
   }
 }
