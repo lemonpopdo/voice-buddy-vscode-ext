@@ -1,0 +1,8 @@
+.gitignore
+.git/**
+.vscode/**
+tsconfig.json
+*.vsix
+node_modules/**
+!node_modules/node-edge-tts/**
+src/**
