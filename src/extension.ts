@@ -211,13 +211,24 @@ const STYLE_ICONS: Record<string, string> = {
 
 class VoiceBuddyView implements vscode.WebviewViewProvider {
   private _webviewView?: vscode.WebviewView;
+  private _plyrCssUri = '';
+  private _plyrJsUri = '';
 
   constructor(private readonly _context: vscode.ExtensionContext) {}
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
     this._webviewView = webviewView;
+
+    const extUri = this._context.extensionUri;
+    this._plyrCssUri = webviewView.webview.asWebviewUri(
+      vscode.Uri.joinPath(extUri, 'media', 'js', 'plyr.css')
+    ).toString();
+    this._plyrJsUri = webviewView.webview.asWebviewUri(
+      vscode.Uri.joinPath(extUri, 'media', 'js', 'plyr.min.js')
+    ).toString();
+
     webviewView.webview.options = {
-      localResourceRoots: [this._context.extensionUri],
+      localResourceRoots: [extUri],
       enableScripts: true,
     };
     webviewView.webview.html = this._getHtml();
@@ -276,7 +287,7 @@ class VoiceBuddyView implements vscode.WebviewViewProvider {
 <html>
 <head>
 <meta charset="UTF-8">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css">
+<link rel="stylesheet" href="${this._plyrCssUri}">
 <style>
   body { margin: 0; padding: 12px; font-family: system-ui, sans-serif; background: transparent; color: #ccc; }
   .header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
@@ -345,7 +356,7 @@ class VoiceBuddyView implements vscode.WebviewViewProvider {
   <!-- Hidden audio element for voice playback -->
   <audio id="audio-player" preload="none"></audio>
 
-  <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js"></script>
+  <script src="${this._plyrJsUri}"></script>
   <script>
     const vscode = acquireVsCodeApi();
     const playerEl = document.getElementById('audio-player');
