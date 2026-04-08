@@ -97,6 +97,7 @@
       "activitybar": [
         {
           "id": "voiceBuddySidebar",
+          "title": "Voice Buddy",
           "icon": "media/icon.svg"
         }
       ]
